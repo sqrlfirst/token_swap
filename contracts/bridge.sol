@@ -12,12 +12,12 @@ contract bridge is AccessControl {
     struct SwapsInfo{
         STATE state;
         uint256 nonce; // not sure about type 
-    };
+    }
 
     mapping (string => address) tokensBySymbol;
     mapping (bytes32 => SwapsInfo) swaps;       // CONTINUE
 
-    event swapHappend();
+    event swapHappend(); // add data to event 
 
     constructor (
         address addr_back
@@ -27,7 +27,7 @@ contract bridge is AccessControl {
     }
 
 
-    function swap {
+    function swap() {
         /*  - burn tokens from user                 *
          *  - write to swap MAP hash of transaction *
          *  - change status of swap                 *
@@ -39,7 +39,7 @@ contract bridge is AccessControl {
 
     function addToken(string _tokenSymbol, address _tokenAdress) external {
         // add tokens to contract for  swapping // 
-
+        tokensBySymbol[_tokenSymbol] = _tokenAdress;
     }
 
 }
