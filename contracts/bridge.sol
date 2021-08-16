@@ -17,17 +17,21 @@ contract bridge is AccessControl {
     mapping (string => address) tokensBySymbol;
     mapping (bytes32 => SwapsInfo) swaps;       // CONTINUE
 
-    event swapHappend(); // add data to event 
+    event swapHappend(address sourceAddress, 
+                      address destinationAddress,
+                      address sender,
+                      address recepient,
+                      address amount,
+                      address token,
+                      bytes32 seed
+                    ); 
 
-    constructor (
-        address addr_back
-    ) public {
-        _setupRole(VALIDATOR_ROLE, addr_back);      // _??_: it's correct way to set up validator role?//  
-
+    constructor (address addr_back) public {
+        _setupRole(VALIDATOR_ROLE, addr_back);      // _??_: it's correct way to set up validator role?// I think its correct 
     }
 
 
-    function swap() {
+    function swap() external {
         /*  - burn tokens from user                 *
          *  - write to swap MAP hash of transaction *
          *  - change status of swap                 *
@@ -37,7 +41,7 @@ contract bridge is AccessControl {
         emit swapHappend();
     }
 
-    function addToken(string _tokenSymbol, address _tokenAdress) external {
+    function addToken(string memory _tokenSymbol, address _tokenAdress) external {
         // add tokens to contract for  swapping // 
         tokensBySymbol[_tokenSymbol] = _tokenAdress;
     }
