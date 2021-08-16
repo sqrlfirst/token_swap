@@ -2,6 +2,9 @@
 pragma solidity >=0.8.4;
 
 import "@openzeppelin/contracts/access/AccessControl.sol";
+import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import "./bulldogtoken.sol";
+
 
 contract bridge is AccessControl {
 
@@ -17,28 +20,33 @@ contract bridge is AccessControl {
     mapping (string => address) tokensBySymbol;
     mapping (bytes32 => SwapsInfo) swaps;       // CONTINUE
 
-    event swapHappend(address sourceAddress, 
-                      address destinationAddress,
-                      address sender,
-                      address recepient,
-                      address amount,
-                      address token,
-                      bytes32 seed
+    event eventSwap(address sourceAddress, 
+                    address destinationAddress,
+                    address sender,
+                    address recepient,
+                    address amount,
+                    address token,
+                    bytes32 seed
                     ); 
 
-    constructor (address addr_back) public {
+    constructor (address addr_back) {
         _setupRole(VALIDATOR_ROLE, addr_back);      // _??_: it's correct way to set up validator role?// I think its correct 
     }
 
 
-    function swap() external {
+    function swap(bytes memory signature, address recepient, uint amount, string memory symbol, bytes32 txHash) external {
+        require(tokensBySymbol[symbol] != address(0), "Token not registered.");
+        
+        // todo verify
+
+        //ERC20(tokensBySymbol[symbol]).burn(msg.sender, amount);
         /*  - burn tokens from user                 *
          *  - write to swap MAP hash of transaction *
          *  - change status of swap                 *
          *  - emit swapHappend event                */ 
 
 
-        emit swapHappend();
+        //emit eventSwap();
     }
 
     function addToken(string memory _tokenSymbol, address _tokenAdress) external {
