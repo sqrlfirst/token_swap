@@ -34,18 +34,19 @@ contract bridge is AccessControl {
     }
 
 
-    function swap(bytes memory signature, address recepient, uint amount, string memory symbol, bytes32 txHash) external {
+    function swap(bytes memory /*signature*/, address /*recepient*/, uint amount, string memory symbol, bytes32 txHash, uint256 nonce) external {
         require(tokensBySymbol[symbol] != address(0), "Token not registered.");
         
         // todo verify
 
-        //ERC20(tokensBySymbol[symbol]).burn(msg.sender, amount);
-        /*  - burn tokens from user                 *
-         *  - write to swap MAP hash of transaction *
-         *  - change status of swap                 *
-         *  - emit swapHappend event                */ 
+        BullDogToken(tokensBySymbol[symbol]).burn(msg.sender, amount);
+        swaps[txHash] = SwapsInfo(STATE.WAIT, nonce);
+        
+       
+        
+        /*  - emit swapHappend event   */ 
 
-
+        // todo 
         //emit eventSwap();
     }
 
