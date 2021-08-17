@@ -9,8 +9,13 @@ import "./bulldogtoken.sol";
 contract bridge is AccessControl {
 
     bytes32 public constant VALIDATOR_ROLE = keccak256("VALIDATOR_ROLE");
-    enum STATE {WAIT, DONE} // states writen as an example 
-                                    // not working one, change later
+    bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
+
+    enum STATE {
+        empty, 
+        initialized, 
+        redeemed
+    } 
 
     struct SwapsInfo{
         STATE state;
@@ -18,49 +23,54 @@ contract bridge is AccessControl {
     }
 
     mapping (string => address) tokensBySymbol;
-    mapping (bytes32 => SwapsInfo) swaps;       // CONTINUE
+    mapping (bytes32 => SwapsInfo) swaps;       
+    mapping (uint256 => bool) chains;
 
-    event eventSwap(address sourceAddress, 
-                    address destinationAddress,
-                    address sender,
-                    address recepient,
-                    uint256 amount,
-                    string  tokenSymbol,
-                    bytes32 seed
-                    ); 
+    event eventSwap ( 
+        uint256 initChain, 
+        uint256 destChain, 
+        address sender,
+        address recepient,
+        uint256 amount,
+        string  tokenSymbol,
+        uint256 nonce
+    ); 
 
     constructor (address addr_back) {
-        _setupRole(VALIDATOR_ROLE, addr_back);      // _??_: it's correct way to set up validator role?// I think its correct 
+        _setupRole(VALIDATOR_ROLE, addr_back);       
+        _setupRole(ADMIN_ROLE,msg.sender);
+
+
     }
 
-
     function swap(
-        bytes memory /*signature*/,
-        address /*recepient*/,
-        uint amount,
-        string memory symbol,
-        bytes32 txHash, 
-        uint256 nonce
-    ) external 
+        uint256 _initChain, 
+        uint256 _destChain, 
+        address _sender,
+        address _recepient,
+        uint256 _amount,
+        string memory _tokenSymbol,
+        uint256 _nonce 
+    ) external nonReeternal returns (bool)
     {
         require(tokensBySymbol[symbol] != address(0), "Token not registered.");
         
-        // todo verify
 
         BullDogToken(tokensBySymbol[symbol]).burn(msg.sender, amount);
         swaps[txHash] = SwapsInfo(STATE.WAIT, nonce);
         
-       
-        
         /*  - emit swapHappend event   */ 
 
         // todo 
-        //emit eventSwap();
+        emit eventSwap();
     }
 
-    function addToken(string memory _tokenSymbol, address _tokenAdress) external return (bool) {
-        // add tokens to contract for  swapping // 
-        
+    function addToken (
+        string memory _tokenSymbol,
+        address _tokenAdress
+    ) external returns (bool)
+    {
+        // role of msg.sender is ADMIN?
         tokensBySymbol[_tokenSymbol] = _tokenAdress;
         return true;
     }
