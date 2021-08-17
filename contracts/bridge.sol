@@ -26,6 +26,8 @@ contract bridge is AccessControl {
     mapping (bytes32 => SwapsInfo) swaps;       
     mapping (uint256 => bool) chains;
 
+    uint256 public ChainId;
+
     event eventSwap ( 
         uint256 chainFrom, 
         uint256 chainTo, 
@@ -36,10 +38,15 @@ contract bridge is AccessControl {
         uint256 nonce
     ); 
 
-    constructor (address addr_back) {
+    constructor (address addr_back, uint256 _chainFrom) {
         _setupRole(VALIDATOR_ROLE, addr_back);       
         _setupRole(ADMIN_ROLE,msg.sender);
+        _setRoleAdmin(ADMIN_ROLE, DEFAULT_ADMIN_ROLE);
 
+        ChainId = _chainFrom;
+        chains[ChainId] = true;
+
+        /* ADD Some info about others blochains*/
 
     }
 
@@ -51,7 +58,14 @@ contract bridge is AccessControl {
         string memory _tokenSymbol
     ) external nonReeternal returns (bool)
     {
-        require(tokensBySymbol[symbol] != address(0), "Token not registered.");
+        require(
+            _chainTo != _chainId,
+            "bridge_swap:: chains are same"    
+        );
+        require(
+            tokensBySymbol[symbol] != address(0),
+            "bridge_swap:: there is no such token in contract"
+        );
         
         bytes32 hashedMsg = keccak256(
             abi.encodePacked(
@@ -66,7 +80,10 @@ contract bridge is AccessControl {
         );
 
         BullDogToken(tokensBySymbol[symbol]).burn(msg.sender, amount);
-        swaps[hashedMsg] = SwapsInfo(STATE.WAIT, nonce);
+        swaps[hashedMsg] = SwapsInfo({
+            state: STATE.initialized,
+            nonce: _nonce
+        });
         
         // todo 
         emit eventSwap(
@@ -85,7 +102,10 @@ contract bridge is AccessControl {
         address _tokenAdress
     ) external returns (bool)
     {
-        // role of msg.sender is ADMIN?
+        require(
+            hasRole(ADMIN_ROLE, msg.sender),
+            "bridge_addToken:: sender is not an admin"
+        );
         tokensBySymbol[_tokenSymbol] = _tokenAdress;
         return true;
     }
