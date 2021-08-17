@@ -9,7 +9,7 @@ import "./bulldogtoken.sol";
 contract bridge is AccessControl {
 
     bytes32 public constant VALIDATOR_ROLE = keccak256("VALIDATOR_ROLE");
-    enum STATE {UNDONE, WAIT, DONE} // states writen as an example 
+    enum STATE {WAIT, DONE} // states writen as an example 
                                     // not working one, change later
 
     struct SwapsInfo{
@@ -24,8 +24,8 @@ contract bridge is AccessControl {
                     address destinationAddress,
                     address sender,
                     address recepient,
-                    address amount,
-                    address token,
+                    uint256 amount,
+                    string  tokenSymbol,
                     bytes32 seed
                     ); 
 
@@ -34,7 +34,15 @@ contract bridge is AccessControl {
     }
 
 
-    function swap(bytes memory /*signature*/, address /*recepient*/, uint amount, string memory symbol, bytes32 txHash, uint256 nonce) external {
+    function swap(
+        bytes memory /*signature*/,
+        address /*recepient*/,
+        uint amount,
+        string memory symbol,
+        bytes32 txHash, 
+        uint256 nonce
+    ) external 
+    {
         require(tokensBySymbol[symbol] != address(0), "Token not registered.");
         
         // todo verify
@@ -50,9 +58,11 @@ contract bridge is AccessControl {
         //emit eventSwap();
     }
 
-    function addToken(string memory _tokenSymbol, address _tokenAdress) external {
+    function addToken(string memory _tokenSymbol, address _tokenAdress) external return (bool) {
         // add tokens to contract for  swapping // 
+        
         tokensBySymbol[_tokenSymbol] = _tokenAdress;
+        return true;
     }
 
 }
