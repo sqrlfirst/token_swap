@@ -2,20 +2,12 @@
 pragma solidity >=0.8.4;
 
 import "@openzeppelin/contracts/access/AccessControl.sol";
-import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
-import "./bulldogtoken.sol";
-
 
 contract bridge is AccessControl {
 
     bytes32 public constant VALIDATOR_ROLE = keccak256("VALIDATOR_ROLE");
-    bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
-
-    enum STATE {
-        empty, 
-        initialized, 
-        redeemed
-    } 
+    enum STATE {UNDONE, WAIT, DONE} // states writen as an example 
+                                    // not working one, change later
 
     struct SwapsInfo{
         STATE state;
@@ -23,71 +15,35 @@ contract bridge is AccessControl {
     }
 
     mapping (string => address) tokensBySymbol;
-    mapping (bytes32 => SwapsInfo) swaps;       
-    mapping (uint256 => bool) chains;
+    mapping (bytes32 => SwapsInfo) swaps;       // CONTINUE
 
-    event eventSwap ( 
-        uint256 chainFrom, 
-        uint256 chainTo, 
-        address sender,
-        address recepient,
-        uint256 amount,
-        string  tokenSymbol,
-        uint256 nonce
-    ); 
+    event swapHappend(address sourceAddress, 
+                      address destinationAddress,
+                      address sender,
+                      address recepient,
+                      address amount,
+                      address token,
+                      bytes32 seed
+                    ); 
 
-    constructor (address addr_back) {
-        _setupRole(VALIDATOR_ROLE, addr_back);       
-        _setupRole(ADMIN_ROLE,msg.sender);
-
-
+    constructor (address addr_back) public {
+        _setupRole(VALIDATOR_ROLE, addr_back);      // _??_: it's correct way to set up validator role?// I think its correct 
     }
 
-    function swap(
-        uint256 _amount,
-        uint256 _nonce, 
-        address _recepient,
-        uint256 _chainTo, 
-        string memory _tokenSymbol
-    ) external nonReeternal returns (bool)
-    {
-        require(tokensBySymbol[symbol] != address(0), "Token not registered.");
-        
-        bytes32 hashedMsg = keccak256(
-            abi.encodePacked(
-                _amount,
-                _nonce,
-                msg.sender, // sender 
-                _recepient,
-                _chainId, // chainFrom
-                _chainTo,
-                tokenSymbol
-            )
-        );
 
-        BullDogToken(tokensBySymbol[symbol]).burn(msg.sender, amount);
-        swaps[hashedMsg] = SwapsInfo(STATE.WAIT, nonce);
-        
-        // todo 
-        emit eventSwap(
-            _chainId,
-            _chainTo,
-            _sender,
-            _recepient,
-            _amount,
-            tokenSymbol,
-            nonce
-        );
+    function swap() external {
+        /*  - burn tokens from user                 *
+         *  - write to swap MAP hash of transaction *
+         *  - change status of swap                 *
+         *  - emit swapHappend event                */ 
+
+
+        emit swapHappend();
     }
 
-    function addToken (
-        string memory _tokenSymbol,
-        address _tokenAdress
-    ) external returns (bool)
-    {
-        // role of msg.sender is ADMIN?
+    function addToken(string memory _tokenSymbol, address _tokenAdress) external {
+        // add tokens to contract for  swapping // 
         tokensBySymbol[_tokenSymbol] = _tokenAdress;
-        return true;
     }
 
 }
