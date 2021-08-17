@@ -27,8 +27,8 @@ contract bridge is AccessControl {
     mapping (uint256 => bool) chains;
 
     event eventSwap ( 
-        uint256 initChain, 
-        uint256 destChain, 
+        uint256 chainFrom, 
+        uint256 chainTo, 
         address sender,
         address recepient,
         uint256 amount,
@@ -44,25 +44,40 @@ contract bridge is AccessControl {
     }
 
     function swap(
-        uint256 _initChain, 
-        uint256 _destChain, 
-        address _sender,
-        address _recepient,
         uint256 _amount,
-        string memory _tokenSymbol,
-        uint256 _nonce 
+        uint256 _nonce, 
+        address _recepient,
+        uint256 _chainTo, 
+        string memory _tokenSymbol
     ) external nonReeternal returns (bool)
     {
         require(tokensBySymbol[symbol] != address(0), "Token not registered.");
         
+        bytes32 hashedMsg = keccak256(
+            abi.encodePacked(
+                _amount,
+                _nonce,
+                msg.sender, // sender 
+                _recepient,
+                _chainId, // chainFrom
+                _chainTo,
+                tokenSymbol
+            )
+        );
 
         BullDogToken(tokensBySymbol[symbol]).burn(msg.sender, amount);
-        swaps[txHash] = SwapsInfo(STATE.WAIT, nonce);
+        swaps[hashedMsg] = SwapsInfo(STATE.WAIT, nonce);
         
-        /*  - emit swapHappend event   */ 
-
         // todo 
-        emit eventSwap();
+        emit eventSwap(
+            _chainId,
+            _chainTo,
+            _sender,
+            _recepient,
+            _amount,
+            tokenSymbol,
+            nonce
+        );
     }
 
     function addToken (
