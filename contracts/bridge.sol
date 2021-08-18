@@ -89,11 +89,12 @@ contract bridge is AccessControl {
         );
 
         require(
-            swaps[hashedMsg].state != redeemed,  
-            "bridge_swap:: swap state is redeemed"
+            swaps[hashedMsg].state == empty,  
+            "bridge_swap:: swap already exists."
         );
 
         BullDogToken(tokensBySymbol[symbol]).burn(msg.sender, amount);
+        
         swaps[hashedMsg] = SwapsInfo({
             state: STATE.initialized,
             nonce: _nonce
