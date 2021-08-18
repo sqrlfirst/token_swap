@@ -15,14 +15,14 @@ contract bridge is AccessControl {
     bytes32 public constant VALIDATOR_ROLE = keccak256("VALIDATOR_ROLE");
     bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
 
-    enum STATE {
+    enum State {
         empty,            
         initialized,      
         redeemed         
     } 
 
     struct SwapsInfo{
-        STATE state;
+        State state;
         uint256 nonce;  
     }
 
@@ -30,7 +30,7 @@ contract bridge is AccessControl {
     mapping (bytes32 => SwapsInfo) swaps;       
     mapping (uint256 => bool) chains;
 
-    uint256 public ChainId;
+    uint256 private chainId;
 
     event eventSwap ( 
         uint256 chainFrom, 
@@ -42,16 +42,13 @@ contract bridge is AccessControl {
         uint256 nonce
     ); 
 
-    constructor (address addr_back, uint256 _chainFrom) {
+    constructor (address addr_back, uint256 _chainFrom, uint256 _chainTo) {
         _setupRole(VALIDATOR_ROLE, addr_back);       
         _setupRole(ADMIN_ROLE,msg.sender);
         _setRoleAdmin(ADMIN_ROLE, DEFAULT_ADMIN_ROLE);
 
-        ChainId = _chainFrom;
-        chains[ChainId] = true;
-
-        /* ADD Some info about others blochains*/
-
+        chainId = _chainFrom;
+        chains[_chainTo] = true;
     }
 
     function swap(
@@ -62,21 +59,16 @@ contract bridge is AccessControl {
         string memory _tokenSymbol  // Symbol of token
     ) external nonReeternal returns (bool)
     {
-        /*
-         *
-         *
-         */
-
         require(
-            _chainTo != _chainId,
+            _chainTo != chainId,
             "bridge_swap:: chains are same"    
         );
         require(
-            chains[ChainTo] == true,
+            chains[_chainTo] == true,
             "bridge_swap:: chain is not enabled"
         );
         require(
-            tokensBySymbol[symbol] != address(0),
+            tokensBySymbol[_tokenSymbol] != address(0),
             "bridge_swap:: there is no such token in contract"
         );
         
@@ -86,32 +78,35 @@ contract bridge is AccessControl {
                 _nonce,
                 msg.sender, // sender 
                 _recepient,
-                _chainId, // chainFrom
+                chainId, // chainFrom
                 _chainTo,
-                tokenSymbol
+                _tokenSymbol
             )
         );
 
         require(
-            swaps[hashedMsg].state != redeemed,  
-            "bridge_swap:: swap state is redeemed"
+            swaps[hashedMsg].state == State.empty,  
+            "bridge_swap:: swap already exists."
         );
 
-        BullDogToken(tokensBySymbol[symbol]).burn(msg.sender, amount);
+        BullDogToken(tokensBySymbol[_tokenSymbol]).burn(msg.sender, _amount);
+        
         swaps[hashedMsg] = SwapsInfo({
-            state: STATE.initialized,
+            state: State.initialized,
             nonce: _nonce
         });
         
         emit eventSwap(
-            _chainId,
+            chainId,
             _chainTo,
-            _sender,
+            msg.sender,
             _recepient,
             _amount,
-            tokenSymbol,
-            nonce
+            _tokenSymbol,
+            _nonce
         );
+
+        return true;
     }
 
     function addToken (
