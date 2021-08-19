@@ -33,13 +33,12 @@ contract bridge is AccessControl {
     uint256 private chainId;
 
     event eventSwap ( 
-        uint256 chainFrom, 
+        uint256 amount,
+        uint256 nonce,
+        address recepient,
         uint256 chainTo, 
         address sender,
-        address recepient,
-        uint256 amount,
-        string  tokenSymbol,
-        uint256 nonce
+        string  tokenSymbol
     ); 
 
     constructor (address addr_back, uint256 _chainFrom, uint256 _chainTo) {
@@ -57,7 +56,7 @@ contract bridge is AccessControl {
         address _recepient,         //  
         uint256 _chainTo,           // 
         string memory _tokenSymbol  // Symbol of token
-    ) external nonReeternal returns (bool)
+    ) external returns (bool)
     {
         require(
             _chainTo != chainId,
@@ -76,9 +75,9 @@ contract bridge is AccessControl {
             abi.encodePacked(
                 _amount,
                 _nonce,
-                msg.sender, // sender 
+                msg.sender,
                 _recepient,
-                chainId, // chainFrom
+                chainId,
                 _chainTo,
                 _tokenSymbol
             )
@@ -97,13 +96,12 @@ contract bridge is AccessControl {
         });
         
         emit eventSwap(
-            chainId,
+            _amount,
+            _nonce,
+            _recepient,
             _chainTo,
             msg.sender,
-            _recepient,
-            _amount,
-            _tokenSymbol,
-            _nonce
+            _tokenSymbol
         );
 
         return true;
