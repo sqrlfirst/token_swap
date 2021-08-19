@@ -30,7 +30,7 @@ contract bridge is AccessControl {
     mapping (bytes32 => SwapsInfo) swaps;       
     mapping (uint256 => bool) chains;
 
-    uint256 private chainId;
+    uint256 public immutable chainId;
 
     event eventSwap ( 
         uint256 amount,
@@ -41,13 +41,17 @@ contract bridge is AccessControl {
         string  tokenSymbol
     ); 
 
-    constructor (address addr_back, uint256 _chainFrom, uint256 _chainTo) {
-        _setupRole(VALIDATOR_ROLE, addr_back);       
-        _setupRole(ADMIN_ROLE,msg.sender);
-        _setRoleAdmin(ADMIN_ROLE, DEFAULT_ADMIN_ROLE);
+    constructor (uint256 _chainFrom, uint256 _chainTo) {
+        _setupRole(DEFAULT_ADMIN_ROLE,msg.sender);
 
         chainId = _chainFrom;
         chains[_chainTo] = true;
+    }
+
+    function grantRole(bytes32 role, address account) public override
+    {
+        require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender));
+        grantRole(role, account);
     }
 
     function swap(
@@ -88,7 +92,8 @@ contract bridge is AccessControl {
             "bridge_swap:: swap already exists."
         );
 
-        BullDogToken(tokensBySymbol[_tokenSymbol]).burn(msg.sender, _amount);
+        // 
+        //BullDogToken(tokensBySymbol[_tokenSymbol]).burn(msg.sender, _amount);
         
         swaps[hashedMsg] = SwapsInfo({
             state: State.initialized,
